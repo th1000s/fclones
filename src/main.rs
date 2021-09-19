@@ -64,25 +64,27 @@ fn run_group(mut config: GroupConfig, log: &mut Log) -> Result<(), Error> {
         // problems and report as warnings.
         let mut access_error = false;
         let depth = config.depth;
-        config.paths.retain(|p| match fs::metadata(&p) {
-            Ok(m) if m.is_dir() && depth == Some(0) => {
-                log.warn(format!(
-                    "Skipping directory {} because recursive scan is disabled.",
-                    p.display()
-                ));
-                false
-            }
-            Err(e) => {
-                log.err(format!("Can't access {}: {}", p.display(), e));
-                access_error = true;
-                false
-            }
-            Ok(_) => true,
-        });
+        config
+            .roots
+            .retain(|p| match fs::metadata(&p.to_path_buf()) {
+                Ok(m) if m.is_dir() && depth == Some(0) => {
+                    log.warn(format!(
+                        "Skipping directory {} because recursive scan is disabled.",
+                        p.display()
+                    ));
+                    false
+                }
+                Err(e) => {
+                    log.err(format!("Can't access {}: {}", p.display(), e));
+                    access_error = true;
+                    false
+                }
+                Ok(_) => true,
+            });
         if access_error {
             return Err(Error::from("Some input paths could not be accessed."));
         }
-        if config.paths.is_empty() {
+        if config.roots.is_empty() {
             return Err(Error::from("No input files."));
         }
     }

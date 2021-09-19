@@ -158,6 +158,10 @@ pub struct GroupConfig {
     #[structopt(short = "H", long)]
     pub hard_links: bool,
 
+    /// Don't count files found within the same root directory as duplicates.
+    #[structopt(short("X"), long)]
+    pub diff_roots: bool,
+
     /// Before matching, transforms each file by the specified program.
     /// The value of this parameter should contain a command: the path to the program
     /// and optionally a list of space-separated arguments.
@@ -265,7 +269,7 @@ pub struct GroupConfig {
     /// By default descends into directories recursively, unless a recursion depth
     /// limit is specified with `--depth`.
     #[structopt(parse(from_os_str), required_unless("stdin"))]
-    pub paths: Vec<PathBuf>,
+    pub roots: Vec<Path>,
 }
 
 impl GroupConfig {
@@ -346,13 +350,7 @@ impl GroupConfig {
                     .map(|s| Path::from(s.unwrap().as_str())),
             )
         } else {
-            Box::new(
-                self.paths
-                    .iter()
-                    .map(Path::from)
-                    .collect::<Vec<_>>()
-                    .into_iter(),
-            )
+            Box::new(self.roots.clone().into_iter())
         }
     }
 
